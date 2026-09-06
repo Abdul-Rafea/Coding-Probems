@@ -20,9 +20,7 @@ struct Query {
     string attribute;
 };
 
-void parse_tag(vector<Tag>& tags);
 void print_tag(Tag tag);
-void parse_query(vector<Query>& querys);
 void print_query(Query query);
 
 int main() {
@@ -35,70 +33,85 @@ int main() {
 
     cin >> tag_count;
     cin >> query_count;
-    
+    cin.ignore();
+
     // Parse Tags
     for (int i = 0; i < tag_count; i++) {
         char bin;
-        Tag tag;
         string line;
+        Tag tag;
 
-        cin >> line;
+        getline(cin, line);
 
+        // Closing Tag Check
+        if (line.at(1) == '/') {
+            continue;
+        }
+            
+        stringstream ss(line);
+
+        ss >> bin >> tag.name;
+
+        // Attribute Check
+        if (ss.peek() == '>') {
+            tags.push_back(tag);
+            continue;
+        }
+            
+        // Parse Attriutes
         while (true) {
-            int skip_position = 1;
-            
-            // Closing Tag Check
-            if (line.at(skip_position) == '/') {
+            Attribute attribute;
+
+			ss >> attribute.name;
+			ss >> bin >> bin; // remove '=' and '"'
+            ss >> attribute.value;
+
+            if (attribute.value.back() == '>') {
+                attribute.value.pop_back(); // remove '>'
+				attribute.value.pop_back(); // remove '"'
+				tag.attributes.push_back(attribute);
                 break;
             }
-            
-            // Attribute Check
-            if (tag.name.back() == '>') {
-				tag.name = tag.name.substr(0, tag.name.length() - 1);
-                tags.push_back(tag);
+            else if(attribute.value.back() == '"') {
+				attribute.value.pop_back(); // remove '>'
+				attribute.value.pop_back(); // remove '"'
+				tag.attributes.push_back(attribute);
+            }
+            else {
                 break;
             }
-
-            //Parse Attriutes
-            while (true) {
-                Attribute attribute;
-				ss >> attribute.name;
-                ss >> bin >> bin;
-                ss >> attribute.value;
-
-                if (attribute.value.back() == '>') {
-                    attribute.value.pop_back();
-					tag.attributes.push_back(attribute);
-                    break;
-                }
-                else if(attribute.value.back() == '"') {
-					attribute.value.pop_back();
-					tag.attributes.push_back(attribute);
-                }
-                else {
-                    break;
-                }
-            }
-
-			
         }
 
         tags.push_back(tag);
+		print_tag(tag);
     }
 
-    for (int i = 0; i < (tag_count / 2); i++) {
-        parse_tag(tags);
-    }
-
-    // Skip closing Tags
-    for (int i = 0; i < (tag_count / 2); i++) {
-        cin >> string_bin;
-    }
-
+	// Parse Querys
     for (int i = 0; i < query_count; i++) {
-        parse_query(querys);
+        string line;
+		Query query;
+
+		getline(cin, line);
+
+		int pos = line.find('.');
+        int pos_2 = 0;
+        while (pos > 0) {
+            pos_2 += pos;
+            pos = line.find('.', pos_2 + 1);
+            if (!(pos > 0)) {
+				pos_2 += 1;
+            }
+        }
+
+		int pos_3 = line.find('~', pos_2);
+        query.tag = line.substr(pos_2, pos_3 - pos_2);
+		query.attribute = line.substr(pos_3 + 1, line.length());
+
+        querys.push_back(query);
+        print_query(query);
     }
 
+	// Print Query Results
     for (int i = 0; i < querys.size(); i++) {
 		bool found = false;
         for (int j = 0; j < tags.size(); j++) {
@@ -112,6 +125,7 @@ int main() {
                 }
             }
         }
+
         if (!found) {
             cout << "Not Found!" << endl;
         }
@@ -120,79 +134,17 @@ int main() {
     return 0;
 }
 
-void parse_tag(vector<Tag>& tags) {
-    Tag tag;
-    char bin;
-    string token;
-
-    cin >> bin;
-    cin >> tag.name;
-
-    while(tag.name.back() != '>') {
-        Attribute attribute;
-        cin >> attribute.name;
-
-        // Skip = And "
-        for (int i = 0; i < 2; i++) {
-			cin >> bin;
-        }
-
-		cin >> attribute.value;
-
-		bin = attribute.value.back();
-        if (bin == '>') {
-            for (int i = 0; i < 2; i++) {
-                attribute.value.pop_back();
-            }
-
-			tag.attributes.push_back(attribute);
-            break;
-        }
-        else if(bin == '"') {
-			attribute.value.pop_back();
-
-            tag.attributes.push_back(attribute);
-        }
-    }
-    
-	tags.push_back(tag);
-}
-
+// Function Definitions ---------------------------------------------------------------------------
 void print_tag(Tag tag) {
     cout << "Tag Nmae: " << tag.name << endl;
     for (int i = 0; i < tag.attributes.size(); i++) {
 		cout << "Attribute Name: " << tag.attributes.at(i).name << endl;
 		cout << "Attribute Value: " << tag.attributes.at(i).value << endl;
     }
-}
-
-void parse_query(vector<Query>& querys) {
-	Query query;
-    string line;
-
-    cin >> line;
-
-    int pos = line.find('.');
-    int search_pos = 0;
-
-    while (true) {
-        if (pos < 0) {
-			pos = line.find('~');
-            query.tag = line.substr(search_pos, pos - search_pos);
-			query.attribute = line.substr(pos + 1, line.length());
-
-            break;
-        }
-        else if (pos > 0) {
-			search_pos = pos + 1;
-			pos = line.find('.', search_pos);
-        }
-    }
-    
-    querys.push_back(query);
+    cout << endl;
 }
 
 void print_query(Query query) {
     cout << "Query Tag: " << query.tag << endl;
-    cout << "Query Attribute: " << query.attribute << endl;
+    cout << "Query Attribute: " << query.attribute << endl << endl;
 }
