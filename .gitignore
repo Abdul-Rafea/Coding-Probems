@@ -1,0 +1,7 @@
+# Ignore Everything
+/*
+
+# Ony Allow
+!.gitignore
+!src/
+!README.md
