@@ -125,26 +125,17 @@ int main() {
 		int path_size = line.find('~');
 		query.path = line.substr(0, path_size);
 
-        // Find . And ~ Positions
+		// Set Query Tag and Attribute
         int pos = line.rfind('.');
-        if (pos < 0) {
+		int pos_2 = line.find('~');
 
+        if (pos > 0) {
+            query.tag = line.substr(pos + 1, pos_2 - pos - 1);
         }
-
-		//int pos = line.find('.');
-  //      int pos_2 = 0;
-  //      while (pos > 0) {
-  //          pos_2 += pos;
-  //          pos = line.find('.', pos_2 + 1);
-  //          if (!(pos > 0)) {
-		//		pos_2 += 1;
-  //          }
-  //      }
-
-		//Set Query Tag and Attribute
-		int pos_3 = line.find('~', pos_2);
-        query.tag = line.substr(pos_2, pos_3 - pos_2);
-		query.attribute = line.substr(pos_3 + 1, line.length());
+        else {
+			query.tag = line.substr(0, pos_2);
+        }
+        query.attribute = line.substr(pos_2 + 1, line.length());
 
         querys.push_back(query);
         if(enable_printing) print_query(query);
